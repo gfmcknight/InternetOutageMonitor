@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace InternetOutageMonitor
 {
-    public partial class Service1 : ServiceBase
+    public partial class MonitoringService : ServiceBase
     {
-        public Service1()
+        public MonitoringService()
         {
             InitializeComponent();
         }
