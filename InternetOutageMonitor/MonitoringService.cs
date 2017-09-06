@@ -3,23 +3,23 @@ using System.IO;
 using System.Net.NetworkInformation;
 using System.ServiceProcess;
 using System.Timers;
-using Humanizer;
 
 namespace InternetOutageMonitor
 {
     public partial class MonitoringService : ServiceBase
     {
         private static readonly int PingTimeoutTime = 4000;
+        private static readonly string NewlineChar = Environment.NewLine;
 
         private bool lastConnectionState;
-        private int connectionStateDuration;
+        private int outages;
 
         private string file;
 
         public MonitoringService(string[] args)
         {
             InitializeComponent();
-            connectionStateDuration = 0;
+            outages = 0;
         }
 
         public void OnTimer(object sender, ElapsedEventArgs e)
@@ -29,30 +29,33 @@ namespace InternetOutageMonitor
             {
                 if (connectionState)
                 {
-                    File.AppendAllText(file, String.Format("Connected to the internet at {0}.", getTimeString()));
+                    File.AppendAllText(file, String.Format("Connection to the internet restored at {0}." + NewlineChar, getTimeString()));
                 }
                 else
                 {
-                    File.AppendAllText(file, String.Format("Disconnected from the internet at {0}.", getTimeString()));
+                    File.AppendAllText(file, String.Format("Connection to the internet lost at {0}." + NewlineChar, getTimeString()));
+                    outages++;
                 }
             }
+            lastConnectionState = connectionState;
         }
 
         protected override void OnStart(string[] args)
         {
             file = Path.Combine(Environment.CurrentDirectory, "OutageLog.txt");
 
-            File.AppendAllText(file, String.Format("InternetOutageMonitor started at {0}.", getTimeString()));
+            File.AppendAllText(file, String.Format("InternetOutageMonitor started at {0}." + NewlineChar, getTimeString()));
 
             if (checkConnection())
             {
-                File.AppendAllText(file, "Connected to the internet at start.");
+                File.AppendAllText(file, "Connected to the internet at start." + NewlineChar);
                 lastConnectionState = true;
             }
             else
             {
-                File.AppendAllText(file, "Disconnected from the internet at start.");
+                File.AppendAllText(file, "Disconnected from the internet at start." + NewlineChar);
                 lastConnectionState = false;
+                outages++;
             }
 
             // Set up a timer to trigger every minute.  
@@ -64,7 +67,8 @@ namespace InternetOutageMonitor
 
         protected override void OnStop()
         {
-            File.AppendAllText(file, String.Format("InternetOutageMonitor stopped at {0}.", getTimeString()));
+            File.AppendAllText(file, String.Format("InternetOutageMonitor stopped at {0}." + NewlineChar, getTimeString()));
+            File.AppendAllText(file, String.Format("{0} outages since start." + NewlineChar, outages));
         }
 
         protected override void OnContinue()
@@ -99,7 +103,7 @@ namespace InternetOutageMonitor
 
         private string getTimeString()
         {
-            DateTime time = System.DateTime.UtcNow;
+            DateTime time = System.DateTime.Now;
             return String.Format("{0}, {1}", time.ToLongDateString(), time.ToLongTimeString());
         }
     }
