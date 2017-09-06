@@ -12,12 +12,12 @@ namespace InternetOutageMonitor
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        static void Main()
+        static void Main(string[] args)
         {
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
-                new MonitoringService()
+                new MonitoringService(args)
             };
             ServiceBase.Run(ServicesToRun);
         }
